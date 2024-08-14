@@ -8,7 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 public class Robot extends TimedRobot {
   private Joystick joy;
-  private double velocity, Mag, turnRatio, LS, RS, px, py;
+  private double velocity, Mag, turnRatio, LS, RS, px, py, TrigAxi;
   private final VictorSPX leftMotor1 = new VictorSPX(0);
   private final VictorSPX leftMotor2 = new VictorSPX(1);
   private final VictorSPX rightMotor1 = new VictorSPX(2);
@@ -28,13 +28,18 @@ public class Robot extends TimedRobot {
     a = joy.getRawButton(1);
     b = joy.getRawButton(2);
     x = joy.getRawButton(3);
+    TrigAxi = Deadzone(joy.getRawAxis(3) - joy.getRawAxis(2));
     velocity = getVelocity(a, b, x);
-    px = joy.getRawAxis(0);
-    py = joy.getRawAxis(1) * -1;
+    px = Deadzone(joy.getRawAxis(0));
+    py = Deadzone(-joy.getRawAxis(1));
     if (pov != -1) {
       POVS();
     }else{
       calculateMotorSpeeds(px, py);
+      if (px == 0 && py == 0) {
+        RS = TrigAxi * velocity;
+        LS = TrigAxi * velocity;
+      }
     }
 
     leftMotor1.set(ControlMode.PercentOutput, LS);
@@ -46,6 +51,13 @@ public class Robot extends TimedRobot {
     if (b) return 0.25;
     if (x) return 1;
     return velocity;
+  }
+  private double Deadzone(double valor){
+    if (Math.abs(valor) < 0.02) {
+      return 0;
+    } else{
+      return valor;
+    }
   }
   private void POVS() {
     
@@ -96,25 +108,26 @@ public class Robot extends TimedRobot {
     Mag = calculateMag(px, py);
     double AngEmRadiano = Math.atan2(px, py);
     double graus = Math.toDegrees(AngEmRadiano);
-    turnRatio = Math.abs(graus / 180);
+    turnRatio = Math.abs(graus / 180) * TrigAxi;
+    
     Mag = Math.min(Mag, 1);
     quad = getquad(px, py);
     switch (quad) {
       case 1:
-        LS = (1 + turnRatio * 2) * Mag;
-        RS = (1 - turnRatio * 2) * Mag;
+        LS = (TrigAxi + turnRatio * 2) * Mag;
+        RS = (TrigAxi - turnRatio * 2) * Mag;
         break;
       case 2:
-        LS = (1 - turnRatio * 2) * Mag;
-        RS = (1 + turnRatio * 2) * Mag;
+        LS = (TrigAxi - turnRatio * 2) * Mag;
+        RS = (TrigAxi + turnRatio * 2) * Mag;
         break;
       case 3:
-        LS = (1 + turnRatio * 2) * -Mag;
-        RS = (1 - turnRatio * 2) * Mag;
+        LS = (TrigAxi + turnRatio * 2) * -Mag;
+        RS = (TrigAxi - turnRatio * 2) * Mag;
         break;
       case 4:
-        LS = (1 - turnRatio * 2) * Mag;
-        RS = (1 + turnRatio * 2) * -Mag;
+        LS = (TrigAxi - turnRatio * 2) * Mag;
+        RS = (TrigAxi + turnRatio * 2) * -Mag;
         break;
       default:
         LS = 0;
@@ -122,20 +135,20 @@ public class Robot extends TimedRobot {
         break;
     }
     if (graus == 0) {
-      LS = Mag;
-      RS = Mag;
+      LS = Mag * TrigAxi;
+      RS = Mag * TrigAxi;
     }
-    if (graus == 180 && py != 0) {
-      LS = -Mag;
-      RS = -Mag;
+    if (graus == 180) {
+      LS = -Mag * TrigAxi;
+      RS = -Mag * TrigAxi;
     }
     if (graus == 90) {
-      LS = Mag;
+      LS = Mag * TrigAxi;
       RS = 0;
     }
     if (graus == -90) {
       LS = 0;
-      RS = Mag;
+      RS = Mag * TrigAxi;
     }
     LS *= velocity;
     RS *= velocity;
@@ -158,5 +171,6 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Graus da curva", Math.toDegrees(Math.atan2(joy.getRawAxis(0), joy.getRawAxis(1) * -1)));
     SmartDashboard.putNumber("Velocidade", velocity);
     SmartDashboard.putNumber("Magnitude", calculateMag(px, py));
+    SmartDashboard.putNumber("QUad", quad);
   }
 }

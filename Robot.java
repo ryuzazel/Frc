@@ -34,6 +34,8 @@ public class Robot extends TimedRobot {
     py = Deadzone(-joy.getRawAxis(1));
     if (pov != -1) {
       POVS();
+      RS *=TrigAxi;
+      LS *=TrigAxi;
     }else{
       calculateMotorSpeeds(px, py);
       if (px == 0 && py == 0) {

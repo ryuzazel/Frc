@@ -9,10 +9,10 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 public class Robot extends TimedRobot {
   private Joystick joy;
   private double velocity, Mag, LS, RS, px, py, TrigAxi;
-  private final VictorSPX leftMotor1 = new VictorSPX(0);
-  private final VictorSPX leftMotor2 = new VictorSPX(1);
-  private final VictorSPX rightMotor1 = new VictorSPX(2);
-  private final VictorSPX rightMotor2 = new VictorSPX(3);
+  private final VictorSPX leftMotor1 = new VictorSPX(3);
+  private final VictorSPX leftMotor2 = new VictorSPX(4);
+  private final VictorSPX rightMotor1 = new VictorSPX(1);
+  private final VictorSPX rightMotor2 = new VictorSPX(2);
   private boolean a, b, x;
   private int quad, pov;
   @Override

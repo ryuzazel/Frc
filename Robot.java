@@ -8,7 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 public class Robot extends TimedRobot {
   private Joystick joy;
-  private double velocity, Mag, turnRatio, LS, RS, px, py, TrigAxi;
+  private double velocity, Mag, LS, RS, px, py, TrigAxi;
   private final VictorSPX leftMotor1 = new VictorSPX(0);
   private final VictorSPX leftMotor2 = new VictorSPX(1);
   private final VictorSPX rightMotor1 = new VictorSPX(2);
@@ -42,8 +42,6 @@ public class Robot extends TimedRobot {
     }
     if (pov != -1) {
       POVS();
-      RS *=TrigAxi;
-      LS *=TrigAxi;
     }else{
       
       calculateMotorSpeeds(px, py);
@@ -79,14 +77,14 @@ public class Robot extends TimedRobot {
             break;
         case 45: 
             LS = 1;
-            RS = 0.5; 
+            RS = 0; 
             break;
         case 90:  
-            LS = 0;
-            RS = 1;
+            LS = 1;
+            RS = -1;
             break;
         case 135: 
-            LS = -0.5; 
+            LS = 0; 
             RS = -1;
             break;
         case 180:
@@ -95,14 +93,14 @@ public class Robot extends TimedRobot {
             break;
         case 225: 
             LS = -1;
-            RS = -0.5;
+            RS = 0;
             break;
         case 270: 
-            LS = 0;
+            LS = -1;
             RS = 1;
             break;
         case 315:
-            LS = 0.5; 
+            LS = 0; 
             RS = 1;
             break;
         default:  
@@ -110,62 +108,59 @@ public class Robot extends TimedRobot {
             RS = 0;
             break;
     }
-    LS *= velocity ;
-    RS *= velocity;
-    LS = Math.max(-velocity, Math.min(velocity, LS));
-    RS = Math.max(-velocity, Math.min(velocity, RS));
 }
-  private void calculateMotorSpeeds(double px, double py) {
-    Mag = calculateMag(px, py);
-    double AngEmRadiano = Math.atan2(px, py);
-    double graus = Math.toDegrees(AngEmRadiano);
-    turnRatio = Math.abs(graus / 180) * TrigAxi;
-    
-    Mag = Math.min(Mag, 1);
-    quad = getquad(px, py);
-    switch (quad) {
-      case 1:
-        LS = (TrigAxi + turnRatio * 2) * Mag;
-        RS = (TrigAxi - turnRatio * 2) * Mag;
+private void calculateMotorSpeeds(double px, double py) {
+  Mag = calculateMag(px, py);
+  double graus = Math.abs(Math.toDegrees(Math.atan2(px, py)));
+
+  if (graus > 90) {
+    graus -=90;
+}
+  if(Math.abs(Mag) > 1){
+    Mag -= (Mag - (Mag/Mag));
+}
+  quad = getquad(px, py);
+
+  switch (getquad(px, py)) {
+    case 1:
+    RS = 1 - graus/45;
+    LS = 1;
         break;
-      case 2:
-        LS = (TrigAxi - turnRatio * 2) * Mag;
-        RS = (TrigAxi + turnRatio * 2) * Mag;
+case 2:
+LS = 1 - graus/45;
+RS = 1;
+break;
+case 3:
+RS = 1 - graus/45;
+    LS = 1;
+    LS *= -1;
+    RS *= -1;
+break;
+case 4:
+LS = 1 - graus/45;
+RS = 1;
+LS *= -1;
+RS *= -1;
+break;
+    default:
+    if(px < 0 || py < 0){
+      RS = 1 - graus/45;
+      LS = 1;
+      LS *= -1;
+      RS *=-1;
+      if (py< 0) {
+          RS *=-1;
+      }
+  }else{
+        RS = 1 - graus/45;
+        LS = 1;
+    }
         break;
-      case 3:
-        LS = (TrigAxi + turnRatio * 2) * -Mag;
-        RS = (TrigAxi - turnRatio * 2) * Mag;
-        break;
-      case 4:
-        LS = (TrigAxi - turnRatio * 2) * Mag;
-        RS = (TrigAxi + turnRatio * 2) * -Mag;
-        break;
-      default:
-        LS = 0;
-        RS = 0;
-        break;
-    }
-    if (graus == 0) {
-      LS = Mag * TrigAxi;
-      RS = Mag * TrigAxi;
-    }
-    if (graus == 180) {
-      LS = -Mag * TrigAxi;
-      RS = -Mag * TrigAxi;
-    }
-    if (graus == 90) {
-      LS = Mag * TrigAxi;
-      RS = 0;
-    }
-    if (graus == -90) {
-      LS = 0;
-      RS = Mag * TrigAxi;
-    }
-    LS *= velocity;
-    RS *= velocity;
-    LS = Math.max(-velocity, Math.min(velocity, LS));
-    RS = Math.max(-velocity, Math.min(velocity, RS));
-  }
+}
+
+  LS *= Mag * TrigAxi * velocity;
+  RS *= Mag * TrigAxi * velocity;
+}
   private double calculateMag(double px, double py) {
     return Math.sqrt(px * px + py * py);
   }

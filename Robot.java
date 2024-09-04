@@ -32,10 +32,10 @@ public class Robot extends TimedRobot {
     velocity = getVelocity(a, b, x);
     if (Deadzone(joy.getRawAxis(5)) !=0 || Deadzone(joy.getRawAxis(4)) != 0) {
       px = Deadzone(-joy.getRawAxis(4));
-      py = Deadzone(joy.getRawAxis(5));
+      py = Deadzone(-joy.getRawAxis(5));
     }else{
     px = Deadzone(joy.getRawAxis(0));
-    py = Deadzone(-joy.getRawAxis(1));
+    py = Deadzone(joy.getRawAxis(1));
     }
      if (TrigAxi == 0 && calculateMag(px, py) != 0) {
       TrigAxi = 1;
@@ -108,6 +108,8 @@ public class Robot extends TimedRobot {
             RS = 0;
             break;
     }
+    LS *= 0.25;
+    RS *= 0.25;
 }
 private void calculateMotorSpeeds(double px, double py) {
   Mag = calculateMag(px, py);

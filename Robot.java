@@ -9,10 +9,10 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 public class Robot extends TimedRobot {
   private Joystick joy;
   private double velocity, Mag, LS, RS, px, py, TrigAxi;
-  private final VictorSPX leftMotor1 = new VictorSPX(3);
-  private final VictorSPX leftMotor2 = new VictorSPX(4);
-  private final VictorSPX rightMotor1 = new VictorSPX(1);
-  private final VictorSPX rightMotor2 = new VictorSPX(2);
+  private final VictorSPX leftMotor1 = new VictorSPX(4);
+  private final VictorSPX leftMotor2 = new VictorSPX(3);
+  private final VictorSPX rightMotor1 = new VictorSPX(2);
+  private final VictorSPX rightMotor2 = new VictorSPX(1);
   private boolean a, b, x;
   private int quad, pov;
   @Override
@@ -32,10 +32,10 @@ public class Robot extends TimedRobot {
     velocity = getVelocity(a, b, x);
     if (Deadzone(joy.getRawAxis(5)) !=0 || Deadzone(joy.getRawAxis(4)) != 0) {
       px = Deadzone(-joy.getRawAxis(4));
-      py = Deadzone(-joy.getRawAxis(5));
+      py = Deadzone(joy.getRawAxis(5));
     }else{
     px = Deadzone(joy.getRawAxis(0));
-    py = Deadzone(joy.getRawAxis(1));
+    py = Deadzone(-joy.getRawAxis(1));
     }
      if (TrigAxi == 0 && calculateMag(px, py) != 0) {
       TrigAxi = 1;

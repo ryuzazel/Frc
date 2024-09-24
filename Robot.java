@@ -8,7 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 public class Robot extends TimedRobot {
   private Joystick joy;
-  private double velocity, Mag, LS, RS, px, py, TrigAxi;
+  private double velocity, Mag, LS, RS, px1, py1, TrigAxi, px2, py2, graus;
   private final VictorSPX leftMotor1 = new VictorSPX(4);
   private final VictorSPX leftMotor2 = new VictorSPX(3);
   private final VictorSPX rightMotor1 = new VictorSPX(2);
@@ -21,6 +21,7 @@ public class Robot extends TimedRobot {
     rightMotor1.setInverted(true);
     rightMotor2.follow(rightMotor1);
     leftMotor2.follow(leftMotor1);
+
   }
   @Override
   public void teleopPeriodic() {
@@ -30,27 +31,21 @@ public class Robot extends TimedRobot {
     x = joy.getRawButton(3);
     TrigAxi = Deadzone(joy.getRawAxis(3) - joy.getRawAxis(2));
     velocity = getVelocity(a, b, x);
-    if (Deadzone(joy.getRawAxis(5)) !=0 || Deadzone(joy.getRawAxis(4)) != 0) {
-      px = Deadzone(-joy.getRawAxis(4));
-      py = Deadzone(joy.getRawAxis(5));
-    }else{
-    px = Deadzone(joy.getRawAxis(0));
-    py = Deadzone(-joy.getRawAxis(1));
-    }
-     if (TrigAxi == 0 && calculateMag(px, py) != 0) {
-      TrigAxi = 1;
-    }
-    if (pov != -1) {
+      px2 = Deadzone(-joy.getRawAxis(4));
+      py2 = Deadzone(joy.getRawAxis(5));
+    px1 = Deadzone(joy.getRawAxis(0));
+    py1 = Deadzone(-joy.getRawAxis(1));
+    if (pov == -1) {
+      if (calculateMag(px2, py2) != 0) {
+        calculateMotorSpeeds(px2, py2);
+      }else{
+       calculateMotorSpeeds(px1, py1);
+      }
+    }else if (pov != -1) {
       POVS();
     }else{
-      
-      calculateMotorSpeeds(px, py);
-      if (px == 0 && py == 0) {
-        RS = TrigAxi * velocity;
-        LS = TrigAxi * velocity;
-      }
+      LS = RS = TrigAxi*velocity;
     }
-
     leftMotor1.set(ControlMode.PercentOutput, LS);
     rightMotor1.set(ControlMode.PercentOutput, RS);
     updateSmartDashboard();
@@ -108,61 +103,57 @@ public class Robot extends TimedRobot {
             RS = 0;
             break;
     }
-    LS *= 0.25;
-    RS *= 0.25;
+    LS *= 0.5;
+    RS *= 0.5;
 }
 private void calculateMotorSpeeds(double px, double py) {
-  Mag = calculateMag(px, py);
-  double graus = Math.abs(Math.toDegrees(Math.atan2(px, py)));
-
-  if (graus > 90) {
-    graus -=90;
-}
-  if(Math.abs(Mag) > 1){
-    Mag -= (Mag - (Mag/Mag));
-}
+  double turnratio = Math.abs(px/Mag);
   quad = getquad(px, py);
-
-  switch (getquad(px, py)) {
+  Mag = calculateMag(px, py);
+  graus =  Math.toDegrees(Math.atan2(px, py * -1));
+  if (Mag > 1) {
+    Mag = 1;
+  }
+  switch (quad) {
     case 1:
-    RS = 1 - graus/45;
-    LS = 1;
-        break;
-case 2:
-LS = 1 - graus/45;
-RS = 1;
-break;
-case 3:
-RS = 1 - graus/45;
-    LS = 1;
-    LS *= -1;
-    RS *= -1;
-break;
-case 4:
-LS = 1 - graus/45;
-RS = 1;
-LS *= -1;
-RS *= -1;
-break;
+      LS = Mag;
+      RS = Mag - turnratio;
+      break;
+      case 2:
+      RS = Mag;
+      LS = Mag - turnratio;
+      break;
+      case 3:
+      LS = -Mag;
+      RS = -Mag + turnratio;
+      break;
+      case 4:
+      RS = -Mag;
+      LS = -Mag + turnratio;
+      break;
     default:
-    if(px < 0 || py < 0){
-      RS = 1 - graus/45;
-      LS = 1;
-      LS *= -1;
-      RS *=-1;
-      if (py< 0) {
-          RS *=-1;
-      }
-  }else{
-        RS = 1 - graus/45;
-        LS = 1;
+    if (px > 0 && py == 0) {
+      LS = Mag;
+      RS = -Mag;
     }
-        break;
-}
-
-  LS *= Mag * TrigAxi * velocity;
-  RS *= Mag * TrigAxi * velocity;
-}
+    if (px < 0 && py == 0) {
+      RS = Mag;
+      LS = -Mag;
+    }
+    if (py > 0 && px == 0) {
+      LS = RS = Mag;
+    }
+    if (py < 0 && px == 0) {
+      LS = RS = -Mag;
+    }
+      break;
+  }
+  if (TrigAxi == 0) {
+    TrigAxi =1;
+  }
+  LS *= TrigAxi * velocity;
+  RS *= TrigAxi * velocity;
+  }
   private double calculateMag(double px, double py) {
     return Math.sqrt(px * px + py * py);
   }
@@ -176,9 +167,9 @@ break;
     private void updateSmartDashboard() {
     SmartDashboard.putNumber("Left Motor Speed", LS);
     SmartDashboard.putNumber("Right Motor Speed", RS);
-    SmartDashboard.putNumber("Graus da curva", Math.toDegrees(Math.atan2(joy.getRawAxis(0), joy.getRawAxis(1) * -1)));
+    SmartDashboard.putNumber("Graus da curva", graus);
     SmartDashboard.putNumber("Velocidade", velocity);
-    SmartDashboard.putNumber("Magnitude", calculateMag(px, py));
-    SmartDashboard.putNumber("QUad", quad);
+    SmartDashboard.putNumber("Magnitude", Mag);
+    SmartDashboard.putNumber("Quad", quad);
   }
 }

@@ -19,9 +19,9 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     joy = new Joystick(0);
     rightMotor1.setInverted(true);
-    rightMotor2.follow(rightMotor1);
-    leftMotor2.follow(leftMotor1);
-
+    rightMotor2.setInverted(true);
+        leftMotor1.setInverted(false);
+leftMotor2.setInverted(false);
   }
   @Override
   public void teleopPeriodic() {
@@ -43,11 +43,15 @@ public class Robot extends TimedRobot {
       }
     }else if (pov != -1) {
       POVS();
-    }else{
-      LS = RS = TrigAxi*velocity;
+    }
+    if (px1 + px2 == 0 && py1 + py2 == 0 && pov == -1) {
+      RS = TrigAxi* velocity;
+      LS = TrigAxi * velocity;
     }
     leftMotor1.set(ControlMode.PercentOutput, LS);
+    leftMotor2.set(ControlMode.PercentOutput, LS);
     rightMotor1.set(ControlMode.PercentOutput, RS);
+    rightMotor2.set(ControlMode.PercentOutput, RS);
     updateSmartDashboard();
   }
   private double getVelocity(boolean a, boolean b, boolean x) {
@@ -57,7 +61,7 @@ public class Robot extends TimedRobot {
     return velocity;
   }
   private double Deadzone(double valor){
-    if (Math.abs(valor) < 0.02) {
+    if (Math.abs(valor) < 0.04) {
       return 0;
     } else{
       return valor;
@@ -148,7 +152,7 @@ private void calculateMotorSpeeds(double px, double py) {
     }
       break;
   }
-  if (TrigAxi == 0) {
+  if (TrigAxi == 0 && Mag != 0) {
     TrigAxi =1;
   }
   LS *= TrigAxi * velocity;
@@ -170,6 +174,6 @@ private void calculateMotorSpeeds(double px, double py) {
     SmartDashboard.putNumber("Graus da curva", graus);
     SmartDashboard.putNumber("Velocidade", velocity);
     SmartDashboard.putNumber("Magnitude", Mag);
-    SmartDashboard.putNumber("Quad", quad);
-  }
+    SmartDashboard.putNumber("Quad", quad);
+  }
 }
